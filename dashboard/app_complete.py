@@ -60,8 +60,8 @@ st.markdown("""
 
 # Inicijalizacija session state
 @st.cache_data
-def load_data():
-    """Učitava sve podatke sa cachingom."""
+def load_data_from_folder():
+    """Učitava sve podatke sa cachingom iz data/ foldera."""
     # Pronađi data folder relativno od ovog fajla
     data_path = Path(__file__).parent.parent / 'data'
     loader = AutoDataLoader(str(data_path))
@@ -69,17 +69,69 @@ def load_data():
     summary = loader.get_summary()
     return df, summary
 
+def load_data_from_upload(uploaded_files):
+    """Učitava podatke iz upload-ovanih fajlova."""
+    dfs = []
+    for uploaded_file in uploaded_files:
+        df_temp = pd.read_excel(uploaded_file)
+        dfs.append(df_temp)
+    
+    df = pd.concat(dfs, ignore_index=True)
+    
+    # Konverzija datuma
+    df['Datum i Vrijeme'] = pd.to_datetime(df['Datum i Vrijeme'])
+    df['Datum'] = df['Datum i Vrijeme'].dt.date
+    df['Mjesec'] = df['Datum i Vrijeme'].dt.to_period('M')
+    df['Godina'] = df['Datum i Vrijeme'].dt.year
+    
+    summary = {
+        'ukupno_redova': len(df),
+        'broj_fajlova': len(uploaded_files),
+        'datum_od': df['Datum i Vrijeme'].min(),
+        'datum_do': df['Datum i Vrijeme'].max(),
+        'fajlovi': [f.name for f in uploaded_files]
+    }
+    
+    return df, summary
+
 # Naslov
 st.markdown('<div class="main-header">☕ QUAHWA ANALYTICS DASHBOARD</div>', unsafe_allow_html=True)
 
+# Provjeri da li postoje lokalni podaci
+data_path = Path(__file__).parent.parent / 'data'
+local_data_exists = data_path.exists() and any(data_path.glob('*.xlsx'))
+
 # Učitavanje podataka
-with st.spinner('📂 Učitavam podatke...'):
-    try:
-        df, data_summary = load_data()
-        data_loaded = True
-    except Exception as e:
-        st.error(f"❌ Greška pri učitavanju: {str(e)}")
+if not local_data_exists:
+    st.info("📤 **Streamlit Cloud Mode** - Upload Excel fajlove sa računima")
+    uploaded_files = st.file_uploader(
+        "Upload Excel fajlove (možeš odabrati više)",
+        type=['xlsx', 'xls'],
+        accept_multiple_files=True,
+        help="Upload Excel fajlove formata: 'Excel analiza racuna od DD.MM.YYYY do DD.MM.YYYY.xlsx'"
+    )
+    
+    if uploaded_files:
+        with st.spinner('📂 Učitavam podatke iz upload-ovanih fajlova...'):
+            try:
+                df, data_summary = load_data_from_upload(uploaded_files)
+                data_loaded = True
+            except Exception as e:
+                st.error(f"❌ Greška pri učitavanju: {str(e)}")
+                st.exception(e)
+                data_loaded = False
+    else:
+        st.warning("⬆️ Upload Excel fajlove da bi počeo analizu")
         data_loaded = False
+else:
+    # Lokalni mode - učitaj iz data/ foldera
+    with st.spinner('📂 Učitavam podatke iz lokalnog data/ foldera...'):
+        try:
+            df, data_summary = load_data_from_folder()
+            data_loaded = True
+        except Exception as e:
+            st.error(f"❌ Greška pri učitavanju: {str(e)}")
+            data_loaded = False
 
 if data_loaded:
     # Sidebar info i filteri

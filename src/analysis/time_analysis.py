@@ -70,7 +70,21 @@ class TimeAnalyzer:
     
     def analyze_by_hour(self) -> pd.DataFrame:
         """Analiza po satima."""
-        hourly = self.df.groupby('Sat').agg({
+        # Provjera da li kolona 'Sat' postoji i ima validne vrijednosti
+        if 'Sat' not in self.df.columns:
+            # Ako kolona ne postoji, kreiraj je iz Datum i vrijeme
+            if 'Datum i vrijeme' in self.df.columns:
+                self.df['Sat'] = pd.to_datetime(self.df['Datum i vrijeme']).dt.hour
+            else:
+                return pd.DataFrame(columns=['Sat', 'Ukupna_količina', 'Promet', 'Broj_računa', 'Broj_transakcija', 'Prosječan_račun'])
+        
+        # Uklanjanje redova gdje je Sat NaN
+        df_valid = self.df[self.df['Sat'].notna()].copy()
+        
+        if len(df_valid) == 0:
+            return pd.DataFrame(columns=['Sat', 'Ukupna_količina', 'Promet', 'Broj_računa', 'Broj_transakcija', 'Prosječan_račun'])
+        
+        hourly = df_valid.groupby('Sat').agg({
             'Količina': 'sum',
             'Ukupno': 'sum',
             'Fiskalni broj računa': 'nunique',
@@ -182,17 +196,32 @@ class TimeAnalyzer:
         """Kreira grafikon distribucije po satima."""
         hourly = self.analyze_by_hour()
         
+        if hourly.empty:
+            # Vraća prazan grafikon s porukom
+            fig = go.Figure()
+            fig.add_annotation(
+                text="Nema dostupnih podataka za prikaz po satima",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, showarrow=False,
+                font=dict(size=16)
+            )
+            fig.update_layout(title='Promet po satima')
+            return fig
+        
         fig = px.bar(
             hourly,
             x='Sat',
             y='Promet',
             title='Promet po satima',
-            labels={'Sat': 'Sat dana', 'Promet': 'Ukupan promet'}
+            labels={'Sat': 'Sat dana', 'Promet': 'Ukupan promet'},
+            text='Promet'
         )
         
+        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
         fig.update_layout(
             xaxis=dict(tickmode='linear', tick0=0, dtick=1),
-            hovermode='x'
+            hovermode='x',
+            showlegend=False
         )
         
         return fig

@@ -11,6 +11,7 @@ src_path = Path(__file__).parent.parent / 'src'
 sys.path.insert(0, str(src_path))
 
 from utils.data_loader import DataLoader
+from utils.multi_file_loader import MultiFileLoader
 from analysis.time_analysis import TimeAnalyzer
 from analysis.sales_analysis import SalesAnalyzer
 
@@ -45,6 +46,8 @@ if 'data_loaded' not in st.session_state:
     st.session_state.data_loaded = False
     st.session_state.df_processed = None
     st.session_state.data_loader = None
+    st.session_state.multi_file_loader = None
+    st.session_state.use_multi_files = False
 
 # Naslov
 st.markdown('<h1 class="main-header">☕ Quahwa Analytics Dashboard</h1>', unsafe_allow_html=True)
@@ -53,44 +56,108 @@ st.markdown('<h1 class="main-header">☕ Quahwa Analytics Dashboard</h1>', unsaf
 with st.sidebar:
     st.header("⚙️ Postavke")
     
-    # Upload ili koristi postojeći fajl
-    uploaded_file = st.file_uploader("Učitaj Excel fajl", type=['xlsx', 'xls'])
+    # Odabir načina učitavanja podataka
+    data_source = st.radio(
+        "Izvor podataka:",
+        ["Jedan fajl", "Više fajlova", "Fajlovi iz foldera"],
+        index=0,
+        help="Odaberi kako želiš učitati podatke"
+    )
     
-    if uploaded_file is not None:
-        filepath = uploaded_file
-    else:
-        filepath = "../Računi.xlsx"
+    uploaded_file = None
+    uploaded_files = None
+    filepath = None
+    
+    if data_source == "Jedan fajl":
+        # Postojeća funkcionalnost
+        uploaded_file = st.file_uploader("Učitaj Excel fajl", type=['xlsx', 'xls'])
+        
+        if uploaded_file is not None:
+            filepath = uploaded_file
+        else:
+            filepath = "../Računi.xlsx"
+        
+        st.session_state.use_multi_files = False
+        
+    elif data_source == "Više fajlova":
+        # Upload više fajlova
+        uploaded_files = st.file_uploader(
+            "Učitaj Excel fajlove", 
+            type=['xlsx', 'xls'],
+            accept_multiple_files=True
+        )
+        st.session_state.use_multi_files = True
+        
+    else:  # "Fajlovi iz foldera"
+        # Učitaj sve iz data foldera
+        data_folder = Path(__file__).parent.parent / 'data'
+        st.session_state.use_multi_files = True
+        st.info(f"📁 Učitavanje fajlova iz: {data_folder}")
     
     # Dugme za učitavanje podataka
     if st.button("📥 Učitaj podatke", type="primary"):
         with st.spinner("Učitavam podatke..."):
             try:
-                loader = DataLoader(filepath)
-                df = loader.process_data()
-                st.session_state.data_loaded = True
-                st.session_state.df_processed = df
-                st.session_state.data_loader = loader
-                
-                # Prikaz informacija o učitanim podacima
-                summary = loader.get_data_summary()
-                st.success("✅ Podaci uspješno učitani!")
-                
-                # Provjera i upozorenje za nedostajuće kolone
-                missing_cols = []
-                important_cols = ['Prodajna grupa', 'Fiskalni broj računa', 'Artikl', 'Količina', 'Ukupno']
-                for col in important_cols:
-                    if col not in df.columns:
-                        missing_cols.append(col)
-                
-                if missing_cols:
-                    st.warning(f"⚠️ Nedostaju kolone: {', '.join(missing_cols)}. Neke analize će biti ograničene.")
-                
-                st.info(f"""
-                📊 **Učitano:**
-                - {summary['ukupno_redova']:,} redova
-                - Period: {summary['datum_od'].strftime('%d.%m.%Y')} - {summary['datum_do'].strftime('%d.%m.%Y')}
-                - Ukupan promet: {summary['ukupni_promet']:,.2f} EUR
-                """)
+                if st.session_state.use_multi_files:
+                    # Učitavanje više fajlova
+                    data_folder = Path(__file__).parent.parent / 'data'
+                    multi_loader = MultiFileLoader(str(data_folder))
+                    
+                    if data_source == "Više fajlova" and uploaded_files:
+                        # Upload više fajlova
+                        multi_loader.load_uploaded_files(uploaded_files)
+                    else:
+                        # Učitaj iz foldera
+                        multi_loader.load_all_files()
+                    
+                    if not multi_loader.loaded_files:
+                        st.error("❌ Nema pronađenih Excel fajlova!")
+                    else:
+                        df = multi_loader.combine_data()
+                        st.session_state.data_loaded = True
+                        st.session_state.df_processed = df
+                        st.session_state.multi_file_loader = multi_loader
+                        
+                        # Prikaz sažetka
+                        summary = multi_loader.get_summary_report()
+                        st.success(f"✅ Učitano {summary['broj_fajlova']} fajlova!")
+                        
+                        st.info(f"""
+                        📊 **Objedinjeni podaci:**
+                        - {summary['ukupno_redova']:,} redova
+                        - {summary['broj_fajlova']} fajlova
+                        - Period: {summary['datum_od'].strftime('%d.%m.%Y')} - {summary['datum_do'].strftime('%d.%m.%Y')}
+                        - Ukupan promet: {summary['ukupan_promet']:,.2f} EUR
+                        """)
+                        
+                else:
+                    # Postojeća funkcionalnost - jedan fajl
+                    loader = DataLoader(filepath)
+                    df = loader.process_data()
+                    st.session_state.data_loaded = True
+                    st.session_state.df_processed = df
+                    st.session_state.data_loader = loader
+                    
+                    # Prikaz informacija o učitanim podacima
+                    summary = loader.get_data_summary()
+                    st.success("✅ Podaci uspješno učitani!")
+                    
+                    # Provjera i upozorenje za nedostajuće kolone
+                    missing_cols = []
+                    important_cols = ['Prodajna grupa', 'Fiskalni broj računa', 'Artikl', 'Količina', 'Ukupno']
+                    for col in important_cols:
+                        if col not in df.columns:
+                            missing_cols.append(col)
+                    
+                    if missing_cols:
+                        st.warning(f"⚠️ Nedostaju kolone: {', '.join(missing_cols)}. Neke analize će biti ograničene.")
+                    
+                    st.info(f"""
+                    📊 **Učitano:**
+                    - {summary['ukupno_redova']:,} redova
+                    - Period: {summary['datum_od'].strftime('%d.%m.%Y')} - {summary['datum_do'].strftime('%d.%m.%Y')}
+                    - Ukupan promet: {summary['ukupni_promet']:,.2f} EUR
+                    """)
             except ValueError as e:
                 st.error(f"❌ Greška u podacima: {str(e)}")
                 st.info("💡 Provjerite da Excel fajl sadrži potrebne kolone (Datum i vrijeme, Količina, Ukupno, itd.)")
@@ -159,13 +226,23 @@ with st.sidebar:
 if st.session_state.data_loaded:
     df_filtered = st.session_state.df_filtered
     
-    # Tabs za različite analize
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📊 Pregled", 
-        "⏰ Vremenska Analiza", 
-        "🛒 Analiza Prodaje",
-        "📈 ABC Analiza"
-    ])
+    # Tabs za različite analize - dodaj novi tab za izvješće o varijablama
+    if st.session_state.use_multi_files:
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+            "📊 Pregled", 
+            "⏰ Vremenska Analiza", 
+            "🛒 Analiza Prodaje",
+            "📈 ABC Analiza",
+            "📋 Izvješće varijabli",
+            "📁 Pregled fajlova"
+        ])
+    else:
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "📊 Pregled", 
+            "⏰ Vremenska Analiza", 
+            "🛒 Analiza Prodaje",
+            "📈 ABC Analiza"
+        ])
     
     # TAB 1: PREGLED
     with tab1:
@@ -283,6 +360,18 @@ if st.session_state.data_loaded:
         
         with col2:
             st.subheader("🕐 Analiza po Satima")
+            # Debug: Detaljni pregled
+            with st.expander("🔍 Debug Info", expanded=False):
+                st.write("**Dostupne kolone:**", df_filtered.columns.tolist())
+                if 'Sat' in df_filtered.columns:
+                    st.write(f"**Sat kolona - tip:** {df_filtered['Sat'].dtype}")
+                    st.write(f"**Jedinstveni sati:** {sorted(df_filtered['Sat'].dropna().unique().tolist())}")
+                    st.write(f"**Broj NaN vrijednosti:** {df_filtered['Sat'].isna().sum()}")
+                    st.write(f"**Primjeri Sat vrijednosti:**")
+                    st.write(df_filtered[['Datum i vrijeme', 'Sat']].head(10))
+                else:
+                    st.error("❌ Kolona 'Sat' ne postoji!")
+            
             fig = time_analyzer.plot_hourly_distribution()
             st.plotly_chart(fig, width='stretch')
         
@@ -436,6 +525,173 @@ if st.session_state.data_loaded:
                 st.warning("Nema podataka za ABC analizu.")
         except Exception as e:
             st.error(f"Greška pri kreiranju ABC analize: {str(e)}")
+    
+    # TAB 5: IZVJEŠĆE VARIJABLI (samo za multi-file mode)
+    if st.session_state.use_multi_files:
+        with tab5:
+            st.header("📋 Izvješće svih varijabli")
+            
+            multi_loader = st.session_state.multi_file_loader
+            
+            if multi_loader:
+                st.markdown("""
+                Ovaj pregled prikazuje sve varijable (kolone) koje postoje u učitanim Excel tablicama, 
+                zajedno sa detaljnim informacijama o svakoj varijabli.
+                """)
+                
+                # Pregled varijabli
+                variable_summary = multi_loader.get_variable_summary()
+                
+                st.subheader("📊 Sve varijable u podacima")
+                
+                # Filtriraj kolone koje prikazujemo
+                display_columns = ['Varijabla', 'Tip_podataka', 'Ukupno_vrijednosti', 
+                                 'Validnih_vrijednosti', 'Procenat_popunjenosti', 
+                                 'Jedinstvenih_vrijednosti', 'Primjer_vrijednosti']
+                
+                st.dataframe(
+                    variable_summary[display_columns],
+                    hide_index=True,
+                    use_container_width=True,
+                    height=500
+                )
+                
+                st.divider()
+                
+                # Statistika za numeričke varijable
+                numeric_vars = variable_summary[variable_summary['Tip_podataka'].str.contains('int|float')]
+                
+                if not numeric_vars.empty:
+                    st.subheader("📈 Numeričke varijable - statistika")
+                    
+                    numeric_display = numeric_vars[['Varijabla', 'Min', 'Max', 'Prosjek', 'Suma']].copy()
+                    
+                    st.dataframe(
+                        numeric_display,
+                        hide_index=True,
+                        use_container_width=True
+                    )
+                
+                st.divider()
+                
+                # Usporedba kolona između fajlova
+                st.subheader("🔍 Usporedba kolona između fajlova")
+                
+                column_comparison = multi_loader.get_column_comparison()
+                
+                st.dataframe(
+                    column_comparison,
+                    hide_index=True,
+                    use_container_width=True,
+                    height=400
+                )
+                
+                st.info("""
+                **Objašnjenje simbola:**
+                - ✓ - Kolona postoji u fajlu (tip podataka, broj vrijednosti)
+                - ✗ - Kolona ne postoji u fajlu
+                """)
+                
+                # Download opcije
+                st.divider()
+                st.subheader("💾 Preuzmi izvješća")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    csv_summary = variable_summary.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="📥 Preuzmi pregled varijabli (CSV)",
+                        data=csv_summary,
+                        file_name="varijable_izvjestaj.csv",
+                        mime="text/csv"
+                    )
+                
+                with col2:
+                    csv_comparison = column_comparison.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="📥 Preuzmi usporedbu kolona (CSV)",
+                        data=csv_comparison,
+                        file_name="usporedba_kolona.csv",
+                        mime="text/csv"
+                    )
+        
+        # TAB 6: PREGLED FAJLOVA
+        with tab6:
+            st.header("📁 Pregled učitanih fajlova")
+            
+            multi_loader = st.session_state.multi_file_loader
+            
+            if multi_loader:
+                summary = multi_loader.get_summary_report()
+                
+                # Ukupna statistika
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("📁 Broj fajlova", summary['broj_fajlova'])
+                
+                with col2:
+                    st.metric("📊 Ukupno redova", f"{summary['ukupno_redova']:,}")
+                
+                with col3:
+                    st.metric("💰 Ukupan promet", f"{summary['ukupan_promet']:,.2f} EUR")
+                
+                with col4:
+                    st.metric("🧾 Ukupno računa", f"{summary['ukupno_računa']:,}")
+                
+                st.divider()
+                
+                # Detalji po fajlovima
+                st.subheader("📄 Detalji po fajlovima")
+                
+                files_overview = multi_loader.get_files_overview()
+                
+                # Formatiraj datume
+                files_overview['datum_od'] = pd.to_datetime(files_overview['datum_od']).dt.strftime('%d.%m.%Y')
+                files_overview['datum_do'] = pd.to_datetime(files_overview['datum_do']).dt.strftime('%d.%m.%Y')
+                
+                st.dataframe(
+                    files_overview,
+                    hide_index=True,
+                    use_container_width=True,
+                    column_config={
+                        'naziv': 'Naziv fajla',
+                        'redova': st.column_config.NumberColumn('Redova', format="%d"),
+                        'kolona': st.column_config.NumberColumn('Kolona', format="%d"),
+                        'datum_od': 'Od',
+                        'datum_do': 'Do',
+                        'ukupan_promet': st.column_config.NumberColumn('Promet (EUR)', format="%.2f"),
+                        'broj_računa': st.column_config.NumberColumn('Broj računa', format="%d")
+                    }
+                )
+                
+                st.divider()
+                
+                # Vizualizacija po fajlovima
+                st.subheader("📊 Vizualizacija po fajlovima")
+                
+                import plotly.express as px
+                
+                # Graf prometa po fajlovima
+                fig_revenue = px.bar(
+                    files_overview,
+                    x='naziv',
+                    y='ukupan_promet',
+                    title='Promet po fajlovima',
+                    labels={'naziv': 'Fajl', 'ukupan_promet': 'Promet (EUR)'}
+                )
+                st.plotly_chart(fig_revenue, use_container_width=True)
+                
+                # Graf broja redova
+                fig_rows = px.bar(
+                    files_overview,
+                    x='naziv',
+                    y='redova',
+                    title='Broj transakcija po fajlovima',
+                    labels={'naziv': 'Fajl', 'redova': 'Broj redova'}
+                )
+                st.plotly_chart(fig_rows, use_container_width=True)
 
 else:
     # Prikaz kada podaci nisu učitani
@@ -464,4 +720,5 @@ st.markdown("""
     <p>Quahwa Analytics Dashboard © 2026</p>
 </div>
 """, unsafe_allow_html=True)
+
 

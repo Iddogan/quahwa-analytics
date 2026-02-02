@@ -1,67 +1,89 @@
 # ☕ Quahwa Analytics Dashboard
 
-Kompletni analitički dashboard za analizu prodajnih podataka sa Streamlit i Plotly vizualizacijama.
+Napredni analitički dashboard sa automatskim učitavanjem podataka, multi-godišnjim analizama i detaljnim BI metrikama.
 
 ## 📋 Opis
 
-Quahwa Dashboard je interaktivna aplikacija za analizu podataka o prodaji koja omogućava:
-- **Vremensku analizu**: Mjeseci, tjedni, dani, sati
-- **Analizu prodaje**: Proizvodi, prodajne grupe, promet
-- **ABC analizu**: Pareto princip i klasifikacija proizvoda
-- **Interaktivne grafove**: Vizualizacija trendova i distribucija
-- **Fleksibilno učitavanje**: Podrška za različite Excel formate i nazive kolona
+Quahwa Dashboard je interaktivna aplikacija za kompleksnu analizu prodajnih podataka koja omogućava:
+- **Automatsko učitavanje**: Automatski detektuje i učitava sve Excel fajlove iz data foldera
+- **Multi-godišnja analiza**: Podrška za analizu više godina istovremeno (2024-2026)
+- **10 specijalizovanih tabova**: Executive, Financije, Prodaja, Vremenska analiza, Usporedbe, Lokacije, Kupci, Trendovi, KPI i ABC analiza
+- **Napredne metrike**: MoM%, YoY%, statističke mjere (n, μ, σ), trendovi i prognoze
+- **Interaktivne vizualizacije**: Plotly grafovi sa zoom, filter i export opcijama
 
-## ✨ Karakteristike
+## ✨ Ključne Karakteristike
 
-- 📊 **Dinamički grafovi** - Interaktivni Plotly grafovi sa zoom, pan i hover
-- 🔍 **Napredni filteri** - Filtriranje po periodu i prodajnim grupama
-- 📅 **Vremenska analiza** - Analiza po mjesecima, tjednima, danima i satima
-- 🏆 **Top performeri** - Identifikacija najboljih proizvoda i grupa
-- 📈 **ABC analiza** - Pareto princip za optimizaciju zaliha
-- 🔄 **Automatsko mapiranje** - Prepoznavanje različitih naziva kolona
-- ⚠️ **Error handling** - Rad sa nepotpunim podacima
+### Automatizacija
+- 🔄 **Auto Data Loading** - Automatski pronalazi i učitava sve račun fajlove
+- 📁 **Multi-sheet Support** - Inteligentno prepoznavanje sheet-ova u Excel fajlovima
+- 🗓️ **Year-based Filtering** - 3 moda: single year, year comparison, all years
+- 🏷️ **Column Mapping** - Automatsko mapiranje različitih naziva kolona
+
+### Analitika
+- 📊 **6 Analytics Classes** - FinancialAnalytics, SalesAnalytics, TimeAnalytics, LocationAnalytics, CustomerAnalytics, ProductComparisonAnalytics
+- 📈 **Statistical Standards** - Sample size (n), Mean (μ), Std Dev (σ), MoM%, YoY%
+- 🎯 **KPI Tracking** - Executive metrike, basket analysis, location performance
+- 🔍 **Product Comparison** - Month-by-month usporedbe proizvoda i kategorija
+
+### Vizualizacije
+- 📉 **10 Dashboard Tabs** - Svaki tab fokusiran na specifičan aspect poslovanja
+- 🎨 **Interactive Charts** - Plotly grafovi sa hover tooltipovima i data labeling
+- 📊 **Heatmaps & Trends** - Vremenske distribucije, YoY usporedbe
+- 🌈 **Color-coded Tables** - Background gradients za % promjene
 
 ## 🚀 Instalacija
 
-### 1. Instalirajte potrebne biblioteke:
+### 1. Klonirajte repozitorij:
+
+```bash
+git clone <repository-url>
+cd Quahwa
+```
+
+### 2. Instalirajte zavisnosti:
 
 ```bash
 pip install -r requirements.txt
 ```
 
 Potrebne biblioteke:
-- pandas
-- openpyxl
-- numpy
 - streamlit
+- pandas
 - plotly
+- openpyxl
+- xlrd
+- matplotlib
+- numpy
 - python-dateutil
 
-### 2. Pripremite podatke:
+### 3. Pripremite podatke:
 
-Stavite vaš Excel fajl `Računi.xlsx` u root direktorij projekta.
+Stavite Excel fajlove sa računima u `data/` folder. Dashboard će automatski pronaći sve fajlove koji sadrže "račun" ili "racun" u imenu.
 
 ## 📁 Struktura Projekta
 
 ```
 Quahwa/
 │
-├── dashboard/              # Streamlit dashboard aplikacija
-│   └── app.py             # Glavni fajl dashboarda
+├── dashboard/                 # Streamlit dashboards
+│   └── app_complete.py       # Glavni dashboard (10 tabova)
 │
-├── src/                   # Izvorni kod
-│   ├── utils/            # Pomoćne funkcije
-│   │   └── data_loader.py    # Učitavanje i obrada podataka
+├── src/                      # Izvorni kod
+│   ├── utils/               # Pomoćne funkcije
+│   │   ├── auto_data_loader.py   # Automatsko učitavanje podataka
+│   │   └── data_loader.py        # Osnovni data loader
 │   │
-│   └── analysis/         # Moduli za analizu
-│       ├── time_analysis.py   # Vremenska analiza
-│       └── sales_analysis.py  # Analiza prodaje
+│   └── analysis/            # Moduli za analizu
+│       └── advanced_analytics.py  # 6 analytics klasa
 │
-├── data/                  # Folder za podatke (opciono)
+├── data/                    # Excel fajlovi sa podacima
+│   ├── Excel analiza racuna od 01.01.2024 do 31.12.2024.xlsx
+│   ├── Excel analiza racuna od 01.01.2026 do 31.01.2026.xlsx
+│   └── Računi.xlsx
 │
-├── Računi.xlsx           # Excel fajl s podacima
-├── requirements.txt      # Python zavisnosti
-└── README.md            # Dokumentacija
+├── requirements.txt         # Python zavisnosti
+├── README.md               # Dokumentacija
+└── GIT_SETUP.md           # Git setup instrukcije
 ```
 
 ## 🎯 Kako Koristiti
@@ -69,166 +91,340 @@ Quahwa/
 ### Pokretanje Dashboarda
 
 ```bash
+# Iz root direktorija
+streamlit run dashboard/app_complete.py --server.port 8510
+
+# Ili iz dashboard foldera
 cd dashboard
-streamlit run app.py
+streamlit run app_complete.py
 ```
 
-Dashboard će se otvoriti u vašem web browseru na adresi `http://localhost:8501`
+Dashboard će se otvoriti u browseru (npr. `http://localhost:8510`)
 
-### Korištenje Dashboard-a
+### Dashboard Tabovi
 
-1. **Učitavanje podataka**:
-   - Kliknite na dugme "📥 Učitaj podatke" u sidebar-u
-   - Možete koristiti postojeći fajl ili upload-ovati novi Excel fajl
+1. **📊 Executive Dashboard**
+   - Osnovni KPI-jevi (promet, broj računa, prosječan račun)
+   - Year-over-year usporedbe sa YoY% promjenama
+   - Mjesečni trendovi kroz sve godine
+   - Top 5 artikala i distribucija po prodajnim grupama
 
-2. **Filtriranje podataka**:
-   - Odaberite vremenski period (Sve, Zadnjih N dana, Custom raspon)
-   - Filtrirajte po prodajnim grupama
+2. **💰 Financijska Analiza**
+   - Revenue struktura (Ukupno, Neto, Popusti)
+   - Mjesečni promet sa MoM% i YoY% promjenama
+   - Statistički opisi (n, μ, σ)
+   - Načini plaćanja
 
-3. **Istraživanje analiza**:
-   - **📊 Pregled**: Osnovne metrike i top proizvodi
-   - **⏰ Vremenska Analiza**: Trendovi po mjesecima, danima, satima
-   - **🛒 Analiza Prodaje**: Detaljna analiza proizvoda
-   - **📈 ABC Analiza**: Pareto princip i klasifikacija
+3. **🛒 Analiza Prodaje**
+   - Basket analytics (prosječna vrijednost korpe, količina po računu)
+   - Top 20 proizvoda sa % udjela
+   - Prodajne grupe sa distribucijom prometa
 
-## 📊 Dostupne Analize
+4. **⏰ Vremenska Analiza**
+   - Promet po danima u tjednu
+   - Promet po satima
+   - Heatmap (Dan × Sat)
 
-### Vremenska Analiza
-- Analiza po mjesecima
-- Analiza po tjednima
-- Analiza po danima u tjednu (Ponedjeljak - Nedjelja)
-- Analiza po satima (0-23)
-- Analiza po periodu dana (Jutro, Popodne, Večer, Noć)
+5. **📈 Usporedbe Proizvoda i Kategorija**
+   - Month-by-month trendovi po kategorijama
+   - % Promjena MoM sa color-coded tablicama
+   - Multi-product usporedbe
+   - Top growers/decliners
 
-### Analiza Prodaje
-- Top proizvodi po prometu, količini ili broju računa
-- Analiza po prodajnim grupama
-- Distribucija prometa
-- Performanse proizvoda kroz vrijeme
+6. **🏪 Analiza po Lokalu**
+   - Performance po lokalu
+   - Performance po blagajni
+   - Geografska distribucija prometa
 
-### ABC Analiza
-- Klasifikacija proizvoda (A, B, C kategorije)
-- Pareto analiza (80/20 pravilo)
-- Identifikacija ključnih proizvoda
+7. **👥 Analiza Kupaca**
+   - Segmentacija kupaca
+   - Ponašanje kupaca kroz vrijeme
+
+8. **📉 Trendovi i Predikcije**
+   - Mjesečni trendovi sa prognozama
+   - Seasonality analiza
+
+9. **🎯 KPI Praćenje**
+   - Month-over-Month rast grafovi
+   - Year-over-Year rast grafovi
+   - Ključni poslovni pokazatelji
+
+10. **📊 ABC Analiza**
+    - Pareto princip (80/20 pravilo)
+    - Klasifikacija proizvoda (A, B, C)
+    - Identifikacija ključnih proizvoda
+
+### Filteri u Sidebaru
+
+- **Year Selection**: Odabir jedne ili više godina
+  - Single year mode: Fokus na jednu godinu
+  - Year comparison: Usporedba 2-3 godine
+  - All years: Prikaz svih podataka
+
+- **Month Filter**: Filtriraj po mjesecima (opciono)
+- **Location Filter**: Filtriraj po lokalu (opciono)
 
 ## 💻 Programski Primjeri
 
-### Osnovno korištenje modula:
+### Automatsko učitavanje svih podataka:
 
 ```python
-from src.utils.data_loader import DataLoader
-from src.analysis.time_analysis import TimeAnalyzer
-from src.analysis.sales_analysis import SalesAnalyzer
+from src.utils.auto_data_loader import AutoDataLoader
 
-# Učitavanje podataka
-loader = DataLoader("Računi.xlsx")
-df = loader.process_data()
+# Učitaj sve račun fajlove iz data foldera
+loader = AutoDataLoader("data")
+df = loader.load_all_racuni()
 
-# Filtriranje zadnjih 30 dana
-df_filtered = loader.filter_by_date_range(last_n_days=30)
+# Pregledaj summary
+summary = loader.get_summary()
+print(f"Učitano {summary['total_rows']} redova iz {summary['file_count']} fajlova")
+print(f"Period: {summary['date_range']['start']} - {summary['date_range']['end']}")
+```
 
-# Vremenska analiza
-time_analyzer = TimeAnalyzer(df_filtered)
-monthly_stats = time_analyzer.analyze_by_month()
-hourly_stats = time_analyzer.analyze_by_hour()
+### Financial Analytics:
 
-# Analiza prodaje
-sales_analyzer = SalesAnalyzer(df_filtered)
-top_products = sales_analyzer.get_top_products(n=10, by='promet')
-abc_analysis = sales_analyzer.analyze_revenue_distribution()
+```python
+from src.analysis.advanced_analytics import FinancialAnalytics
 
-# Metrike
-metrics = sales_analyzer.get_sales_metrics()
-print(f"Ukupni promet: {metrics['ukupni_promet']:.2f} EUR")
+# Kreiraj analytics objekat
+fin = FinancialAnalytics(df)
+
+# KPI metrike
+kpis = fin.get_kpi_metrics()
+print(f"Ukupan promet: {kpis['ukupan_promet']:,.2f} EUR")
+print(f"Broj računa: {kpis['broj_računa']:,}")
+print(f"Prosječan račun: {kpis['prosječan_račun']:.2f} EUR")
+
+# Mjesečne metrike sa MoM% i YoY%
+monthly = fin.get_monthly_metrics()
+print(monthly[['Period', 'Promet', 'Promjena_MoM%', 'Promjena_YoY%']])
+
+# Revenue struktura
+revenue = fin.get_revenue_structure()
+print(f"Ukupno: {revenue['ukupno']:,.2f} EUR")
+print(f"Neto: {revenue['neto']:,.2f} EUR ({revenue['neto_dio%']:.1f}%)")
+```
+
+### Product Comparison:
+
+```python
+from src.analysis.advanced_analytics import ProductComparisonAnalytics
+
+comp = ProductComparisonAnalytics(df)
+
+# Usporedi kategorije mjesečno
+cat_comp = comp.compare_categories_monthly()
+monthly_revenue = cat_comp['mjesecni_promet']  # DataFrame sa prometo
+
+m po kategorijama
+pct_change = cat_comp['promjena_promet_%']  # MoM% promjene
+
+# Top growers and decliners
+growers = comp.top_growers_and_decliners(period='M')
+print("Top 10 proizvoda sa najvećim rastom:")
+print(growers['najveci_rast'])
+```
+
+## 📊 Analytics Classes
+
+### 1. FinancialAnalytics
+- `get_kpi_metrics()` - Osnovni KPI-jevi (promet, računi, količina)
+- `get_monthly_metrics()` - Mjesečne metrike sa MoM% i YoY%
+- `get_revenue_structure()` - Revenue breakdown (Ukupno, Neto, Popusti)
+- `get_daily_metrics()` - Dnevne metrike
+
+### 2. SalesAnalytics
+- `get_top_products(n)` - Top N proizvoda po prometu
+- `get_product_categories()` - Analiza po prodajnim grupama
+- `get_basket_analysis()` - Basket metrics (prosječna vrijednost, količina)
+- `get_sales_metrics()` - Ključne sales metrike
+
+### 3. TimeAnalytics
+- `get_daily_pattern()` - Analiza po danima u tjednu
+- `get_hourly_pattern()` - Analiza po satima
+- `get_heatmap_data()` - Dan × Sat heatmap data
+- `get_time_period_analysis()` - Period dana analiza (jutro, popodne, večer)
+
+### 4. LocationAnalytics
+- `get_location_performance()` - Performance po lokalu
+- `get_cashier_performance()` - Performance po blagajni
+- `compare_locations()` - Usporedba lokacija
+
+### 5. CustomerAnalytics
+- `get_customer_segments()` - Segmentacija kupaca
+- `get_customer_behavior()` - Analiza ponašanja
+- `get_top_customers()` - Top kupci
+
+### 6. ProductComparisonAnalytics
+- `compare_categories_monthly()` - Month-by-month usporedba kategorija
+- `compare_products_monthly(products)` - Usporedba odabranih proizvoda
+- `year_over_year_comparison(month)` - YoY usporedba za specifičan mjesec
+- `top_growers_and_decliners(period)` - Top rast/pad proizvoda
+
+## 📈 Statistički Standardi
+
+Dashboard koristi statističke standarde za sve metrike:
+
+- **n** - Sample size (broj opažanja, transakcija, mjeseci)
+- **μ** (mu) - Aritmetička sredina (mean)
+- **σ** (sigma) - Standardna devijacija (standard deviation)
+- **MoM%** - Month-over-Month promjena (mjesec vs prethodni mjesec)
+- **YoY%** - Year-over-Year promjena (godina vs prethodna godina za isti mjesec)
+
+Primjer:
+```
+Mjesečni Promet | n=36 mjeseci, μ=22,055 EUR, σ=5,234 EUR
 ```
 
 ## 📈 Varijable u Podacima
 
-Dataset sadrži sljedeće varijable (kolone):
+Dataset sadrži sljedeće kolone:
 
-1. **Lokal** - Naziv lokala
-2. **Blagajna** - Identifikator blagajne
-3. **Knjigovodstveni datum** - Datum za knjiženje
-4. **Datum i vrijeme** - Tačno vrijeme transakcije
-5. **Način plaćanja** - Metoda plaćanja
-6. **Način prodaje** - Tip prodaje
-7. **Fiskalni broj računa** - Jedinstveni broj računa
-8. **Izdao** - Ko je izdao račun
-9. **Kupac** - Informacije o kupcu
-10. **Porezni broj kupca** - PIB kupca
-11. **PDV** - Iznos PDV-a
-12. **PNP** - Porez na potrošnju
-13. **Ukupno račun** - Ukupan iznos računa
-14. **Šifra** - Šifra artikla
-15. **Artikl** - Naziv artikla
-16. **Prodajna grupa** - Kategorija proizvoda
-17. **Količina** - Prodata količina
-18. **Cijena** - Cijena po jedinici
-19. **Cijena s popustom** - Cijena nakon popusta
-20. **Ukupno popusta** - Ukupan popust
-21. **Ukupno neto** - Neto iznos
-22. **Ukupno** - Ukupan iznos stavke
+**Osnovne informacije:**
+- Lokal - Naziv lokala
+- Blagajna - Identifikator blagajne  
+- Knjigovodstveni datum - Datum za knjiženje
+- Datum i vrijeme - Tačno vrijeme transakcije
 
-## 🔧 Dodatne Funkcionalnosti
+**Transakcija:**
+- Način plaćanja - Metoda plaćanja
+- Način prodaje - Tip prodaje
+- Fiskalni broj računa - Jedinstveni broj računa
+- Izdao - Ko je izdao račun
 
-### DataLoader klasa:
-- `load_data()` - Učitava podatke
-- `process_data()` - Dodaje vremenske kolone
-- `filter_by_date_range()` - Filtrira po datumu
-- `get_data_summary()` - Vraća osnovne statistike
+**Kupac:**
+- Kupac - Informacije o kupcu
+- Porezni broj kupca - PIB kupca
 
-### TimeAnalyzer klasa:
-- `analyze_by_month()` - Mjesečna analiza
-- `analyze_by_week()` - Tjedno analiza
-- `analyze_by_day_of_week()` - Analiza po danima
-- `analyze_by_hour()` - Satna analiza
-- `plot_monthly_trend()` - Graf mjesečnog trenda
-- `plot_hourly_distribution()` - Graf satne distribucije
+**Finansije:**
+- Ukupno račun - Ukupan iznos računa
+- Ukupno neto - Neto iznos (bez PDV)
+- Ukupno popusta - Ukupan popust
+- Ukupno - Ukupan iznos stavke
 
-### SalesAnalyzer klasa:
-- `analyze_by_product_group()` - Analiza po grupama
-- `analyze_by_article()` - Analiza po artiklima
-- `get_top_products()` - Top proizvodi
-- `analyze_revenue_distribution()` - ABC analiza
-- `get_sales_metrics()` - Ključne metrike
-- `plot_top_products()` - Graf top proizvoda
-- `plot_abc_analysis()` - ABC graf
+**Proizvod:**
+- Šifra - Šifra artikla
+- Artikl - Naziv artikla
+- Prodajna grupa - Kategorija proizvoda
+- Količina - Prodata količina
+- Cijena - Cijena po jedinici
+- Cijena s popustom - Cijena nakon popusta
+
+**Generirane kolone** (dodaje AutoDataLoader):
+- Godina - Ekstrahovana godina
+- Mjesec - Ekstrahovani mjesec (1-12)
+- Dan - Ekstrahovani dan
+- Sat - Ekstrahovani sat (0-23)
+- Dan_u_tjednu - Dan u tjednu (0=Ponedjeljak, 6=Nedjelja)
+
+## 🔧 Napredne Funkcionalnosti
+
+### AutoDataLoader
+```python
+loader = AutoDataLoader("data")
+
+# Učitaj sve fajlove
+df = loader.load_all_racuni()
+
+# Summary informacije
+summary = loader.get_summary()
+# {
+#   'total_rows': 204987,
+#   'file_count': 3,
+#   'files': [...],
+#   'date_range': {'start': '2024-01-02', 'end': '2026-01-31'},
+#   'columns': [...]
+# }
+```
+
+### Multi-sheet Excel Support
+AutoDataLoader automatski:
+- Detektuje sve sheet-ove u Excel fajlu
+- Pronalazi sheet sa kolonom "Fiskalni broj računa"
+- Učitava podatke iz ispravnog sheet-a
+
+### Year-based Filtering
+```python
+# U dashboard-u: sidebar multiselect za godine
+selected_years = st.multiselect("Odaberi godine", [2024, 2025, 2026])
+
+# Dashboard automatski filtrira podatke
+df_filtered = df[df['Godina'].isin(selected_years)]
+```
 
 ## 🎨 Customizacija
 
-Dashboard možete prilagoditi:
-- Promijenite boje u grafovima (plotly color schemes)
-- Dodajte nove metrike u `get_sales_metrics()`
-- Kreirajte nove tipove analiza
-- Dodajte export funkcionalnost (PDF, Excel)
+### Dodavanje novih analiza:
+
+1. Kreiraj novu metodu u odgovarajućoj analytics klasi
+2. Dodaj novi tab u dashboard-u
+3. Pozovi metodu i prikažI rezultate
+
+Primjer:
+```python
+# U advanced_analytics.py
+class SalesAnalytics:
+    def get_product_velocity(self):
+        """Brzina prodaje proizvoda."""
+        return self.df.groupby(['Artikl', 'Mjesec']).agg({
+            'Količina': 'sum'
+        }).reset_index()
+
+# U app_complete.py
+with tabs[X]:
+    st.header("Brzina Prodaje")
+    velocity = sales_analytics.get_product_velocity()
+    st.dataframe(velocity)
+```
 
 ## 📝 Napomene
 
-- Podatke automatski formatira i dodaje vremenske kolone
-- Svi iznosi su u EUR (Euro)
-- Dashboard je optimizovan za velike količine podataka
-- Interaktivni grafovi omogućavaju zoom, pan i hover
+- **Automatsko učitavanje**: Dashboard automatski detektuje sve račun fajlove u data folderu
+- **Multi-godina support**: Podrška za analizu podataka kroz više godina
+- **Statistički standardi**: Sve metrike prate znanstvene standarde (n, μ, σ, MoM%, YoY%)
+- **Optimizovano**: Cache mehanizam za brže učitavanje
+- **Responsive**: Dashboard se prilagođava veličini ekrana
 
 ## 🐛 Rješavanje Problema
 
-**Problem**: Podaci se ne učitavaju
-- Provjerite da li je putanja do Excel fajla ispravna
-- Provjerite format Excel fajla (.xlsx)
+**Problem**: "Nema pronađenih račun fajlova"
+```bash
+# Provjeri da li su fajlovi u data/ folderu
+ls data/
 
-**Problem**: Grafovi se ne prikazuju
-- Osvježite stranicu (F5)
-- Provjerite internet konekciju (za plotly CDN)
+# Imena fajlova moraju sadržavati "račun" ili "racun"
+# Primjer: "Excel analiza racuna 2024.xlsx"
+```
 
-**Problem**: Spor dashboard
-- Filtrirajte podatke na manji period
-- Koristite manje proizvoda u top listama
+**Problem**: ValueError sa kolonama
+```bash
+# Provjeri da Excel fajl sadrži potrebne kolone
+# Minimalno potrebne: 'Fiskalni broj računa', 'Datum i vrijeme', 'Ukupno', 'Artikl'
+```
+
+**Problem**: Dashboard se sporo učitava
+```bash
+# Očisti cache
+streamlit cache clear
+
+# Restartuj dashboard
+```
+
+**Problem**: Grafovi prikazuju stare podatke
+```bash
+# Refresh stranicu (F5) ili klikni "Rerun" u dashboard-u
+# Cache se automatski očisti kad se podaci promijene
+```
 
 ## 📧 Podrška
 
-Za pitanja i podršku kontaktirajte autora projekta.
+Za pitanja i podršku:
+- Pregledajte [GIT_SETUP.md](GIT_SETUP.md) za Git setup
+- Provjerite Issues na GitHub repozitoriju
 
 ---
 
-**Verzija**: 1.0  
-**Datum**: Januar 2026  
-**Autor**: Quahwa Analytics Team
+**Verzija**: 2.0  
+**Datum**: Februar 2026  
+**Status**: Production Ready  
+**Dataset**: 204,987 redova (2024-2026)

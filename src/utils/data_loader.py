@@ -36,8 +36,36 @@ class DataLoader:
     def load_data(self) -> pd.DataFrame:
         """Učitava podatke iz Excel fajla."""
         print(f"Učitavam podatke iz: {self.filepath}")
-        self.df = pd.read_excel(self.filepath)
+        
+        # Provjeri da li je filepath Streamlit UploadedFile objekat
+        try:
+            # Za Streamlit UploadedFile objekte, konvertuj u BytesIO
+            if hasattr(self.filepath, 'read'):
+                import io
+                # Očitaj fajl u memoriju
+                bytes_data = self.filepath.read()
+                # Resetuj poziciju za ponovno čitanje ako bude trebalo
+                if hasattr(self.filepath, 'seek'):
+                    self.filepath.seek(0)
+                # Učitaj iz bytes
+                self.df = pd.read_excel(io.BytesIO(bytes_data), engine='openpyxl')
+            else:
+                # Normalan fajl path
+                self.df = pd.read_excel(self.filepath, engine='openpyxl')
+        except Exception as e:
+            print(f"Greška pri učitavanju: {e}")
+            # Pokušaj sa default metodom
+            self.df = pd.read_excel(self.filepath)
+            
         print(f"Učitano {len(self.df)} redova i {len(self.df.columns)} kolona")
+        
+        # Debug: Provjeri datetime kolone odmah nakon učitavanja
+        for col in self.df.columns:
+            if 'datum' in col.lower() or 'time' in col.lower() or 'vrijeme' in col.lower():
+                if len(self.df) > 0:
+                    sample_val = self.df[col].iloc[0]
+                    print(f"  Kolona '{col}': tip={self.df[col].dtype}, primjer={sample_val}")
+        
         return self.df
     
     def _find_column(self, possible_names: list) -> Optional[str]:
@@ -80,10 +108,23 @@ class DataLoader:
         
         bookkeeping_col = self._find_column(['knjigovodstveni datum', 'knjig. datum', 'datum knjiženja'])
         
-        # Konverzija datumskih kolona
-        self.df_processed['Datum i vrijeme'] = pd.to_datetime(
-            self.df_processed[datetime_col], errors='coerce'
-        )
+        # Debug prije konverzije
+        print(f"DEBUG: Prije konverzije - 'Datum i vrijeme' tip: {self.df_processed[datetime_col].dtype}")
+        print(f"DEBUG: Prije konverzije - Primjer: {self.df_processed[datetime_col].iloc[0]}")
+        
+        # Konverzija datumskih kolona - SAMO ako nije već datetime
+        if self.df_processed[datetime_col].dtype != 'datetime64[ns]':
+            self.df_processed['Datum i vrijeme'] = pd.to_datetime(
+                self.df_processed[datetime_col], errors='coerce'
+            )
+        else:
+            # Već je datetime, samo kopiraj ako je potrebno
+            if datetime_col != 'Datum i vrijeme':
+                self.df_processed['Datum i vrijeme'] = self.df_processed[datetime_col]
+        
+        # Debug poslije konverzije
+        print(f"DEBUG: Poslije konverzije - 'Datum i vrijeme' tip: {self.df_processed['Datum i vrijeme'].dtype}")
+        print(f"DEBUG: Poslije konverzije - Primjer: {self.df_processed['Datum i vrijeme'].iloc[0]}")
         
         if bookkeeping_col:
             self.df_processed['Knjigovodstveni datum'] = pd.to_datetime(
@@ -98,15 +139,23 @@ class DataLoader:
         self._standardize_column_names()
         
         # Dodavanje kolona za vremensku analizu
-        self.df_processed['Godina'] = self.df_processed['Datum i vrijeme'].dt.year
-        self.df_processed['Mjesec'] = self.df_processed['Datum i vrijeme'].dt.month
-        self.df_processed['Mjesec_naziv'] = self.df_processed['Datum i vrijeme'].dt.strftime('%B')
-        self.df_processed['Dan'] = self.df_processed['Datum i vrijeme'].dt.day
-        self.df_processed['Dan_u_tjednu'] = self.df_processed['Datum i vrijeme'].dt.day_name()
-        self.df_processed['Dan_u_tjednu_broj'] = self.df_processed['Datum i vrijeme'].dt.dayofweek
-        self.df_processed['Tjedan'] = self.df_processed['Datum i vrijeme'].dt.isocalendar().week
-        self.df_processed['Sat'] = self.df_processed['Datum i vrijeme'].dt.hour
-        self.df_processed['Kvartal'] = self.df_processed['Datum i vrijeme'].dt.quarter
+        # Osiguraj da Datum i vrijeme nije samo datum već i vrijeme
+        dt_series = self.df_processed['Datum i vrijeme']
+        
+        self.df_processed['Godina'] = dt_series.dt.year
+        self.df_processed['Mjesec'] = dt_series.dt.month
+        self.df_processed['Mjesec_naziv'] = dt_series.dt.strftime('%B')
+        self.df_processed['Dan'] = dt_series.dt.day
+        self.df_processed['Dan_u_tjednu'] = dt_series.dt.day_name()
+        self.df_processed['Dan_u_tjednu_broj'] = dt_series.dt.dayofweek
+        self.df_processed['Tjedan'] = dt_series.dt.isocalendar().week
+        self.df_processed['Sat'] = dt_series.dt.hour
+        self.df_processed['Minuta'] = dt_series.dt.minute
+        self.df_processed['Kvartal'] = dt_series.dt.quarter
+        
+        # Debug: Provjeri koliko različitih sati ima
+        unique_hours = self.df_processed['Sat'].unique()
+        print(f"Pronađeno {len(unique_hours)} različitih sati: {sorted(unique_hours)[:10]}...")
         
         # Dodavanje perioda dana
         self.df_processed['Period_dana'] = self.df_processed['Sat'].apply(self._get_period_dana)

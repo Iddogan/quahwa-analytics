@@ -104,6 +104,27 @@ with st.spinner('📂 Učitavam podatke...'):
         data_loaded = True
     except Exception as e:
         st.error(f"❌ Greška pri učitavanju: {str(e)}")
+        
+        # Provjeri da li data folder postoji
+        data_path = Path(__file__).parent.parent / 'data'
+        if data_path.exists():
+            files = list(data_path.glob('*'))
+            st.warning(f"📂 Nema pronađenih podataka u data folderu.")
+            if files:
+                st.info(f"Pronađeno {len(files)} fajlova, ali nisu prepoznati kao račun fajlovi:")
+                for f in files[:5]:
+                    st.text(f"  • {f.name}")
+            else:
+                st.error("Data folder je prazan!")
+        else:
+            st.error("Data folder ne postoji!")
+        
+        st.markdown("""
+        ### Upute:
+        1. Stavi Excel fajlove sa računima u `data/` folder
+        2. Fajlovi trebaju imati kolone: **Datum i Vrijeme**, **Fiskalni broj računa**, **Artikl**, **Ukupno**
+        3. Refresh stranicu
+        """)
         data_loaded = False
 
 if data_loaded:

@@ -97,41 +97,14 @@ def load_data_from_upload(uploaded_files):
 # Naslov
 st.markdown('<div class="main-header">☕ QUAHWA ANALYTICS DASHBOARD</div>', unsafe_allow_html=True)
 
-# Provjeri da li postoje lokalni podaci
-data_path = Path(__file__).parent.parent / 'data'
-local_data_exists = data_path.exists() and any(data_path.glob('*.xlsx'))
-
-# Učitavanje podataka
-if not local_data_exists:
-    st.info("📤 **Streamlit Cloud Mode** - Upload Excel fajlove sa računima")
-    uploaded_files = st.file_uploader(
-        "Upload Excel fajlove (možeš odabrati više)",
-        type=['xlsx', 'xls'],
-        accept_multiple_files=True,
-        help="Upload Excel fajlove formata: 'Excel analiza racuna od DD.MM.YYYY do DD.MM.YYYY.xlsx'"
-    )
-    
-    if uploaded_files:
-        with st.spinner('📂 Učitavam podatke iz upload-ovanih fajlova...'):
-            try:
-                df, data_summary = load_data_from_upload(uploaded_files)
-                data_loaded = True
-            except Exception as e:
-                st.error(f"❌ Greška pri učitavanju: {str(e)}")
-                st.exception(e)
-                data_loaded = False
-    else:
-        st.warning("⬆️ Upload Excel fajlove da bi počeo analizu")
+# Učitavanje podataka - uvijek pokušaj učitati iz data/ foldera
+with st.spinner('📂 Učitavam podatke...'):
+    try:
+        df, data_summary = load_data_from_folder()
+        data_loaded = True
+    except Exception as e:
+        st.error(f"❌ Greška pri učitavanju: {str(e)}")
         data_loaded = False
-else:
-    # Lokalni mode - učitaj iz data/ foldera
-    with st.spinner('📂 Učitavam podatke iz lokalnog data/ foldera...'):
-        try:
-            df, data_summary = load_data_from_folder()
-            data_loaded = True
-        except Exception as e:
-            st.error(f"❌ Greška pri učitavanju: {str(e)}")
-            data_loaded = False
 
 if data_loaded:
     # Sidebar info i filteri

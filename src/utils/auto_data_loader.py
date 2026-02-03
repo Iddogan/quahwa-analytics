@@ -55,8 +55,8 @@ class AutoDataLoader:
         """Provjerava da li je fajl račun fajl."""
         name_lower = file.name.lower()
         
-        # Ključne riječi za račun fajlove
-        racuni_keywords = ['račun', 'racun', 'računi', 'racuni']
+        # Ključne riječi za račun fajlove (svi padežni oblici)
+        racuni_keywords = ['račun', 'racun', 'računi', 'racuni', 'racuna', 'računa']
         
         # Provjeri naziv fajla
         for keyword in racuni_keywords:

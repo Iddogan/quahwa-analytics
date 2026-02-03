@@ -1,0 +1,2 @@
+# System packages required for the app
+# None needed - using pure Python packages

@@ -41,12 +41,6 @@ ENV/
 Thumbs.db
 *.log
 
-# Data files
-*.xlsx
-*.xls
-*.csv
-!example_data.xlsx
-
 # Streamlit
 .streamlit/secrets.toml
 
